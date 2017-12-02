@@ -106,8 +106,8 @@ class Runner:
     def _worker(self):
         while True:
             job = self._job_get()
-            exit = subprocess.run([self._cmd, job], stdout=sys.stdout, stderr=sys.stdout)
-            if exit.returncode == 0:
+            returncode = subprocess.call([self._cmd, job], stdout=sys.stdout, stderr=sys.stdout)
+            if returncode == 0:
                 self._job_done(job)
             else:
                 self._job_retry(job)
