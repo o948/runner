@@ -197,8 +197,15 @@ class Runner:
             heapq.heappop(finish)
         while len(finish) < nworkers:
             heapq.heappush(finish, datetime.now().timestamp())
-        for _ in range(njobs):
-            heapq.heapreplace(finish, finish[0] + avg_time)
+
+        while njobs:
+            if njobs >= nworkers and max(finish) - finish[0] < avg_time:
+                k = njobs // nworkers
+                finish = list(map(lambda t: t + k*avg_time, finish))
+                njobs %= nworkers
+            else:
+                heapq.heapreplace(finish, finish[0] + avg_time)
+                njobs -= 1
 
         return self._fmt_eta(max(finish))
 
