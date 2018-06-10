@@ -3,9 +3,9 @@ Tool to execute specified command on a set of files in parallel.
 
 ## Usage
 ```
-$ runner command file-pattern
+$ runner command jobs-dir [file-pattern]
 ```
-will execute `command` with each of the files matching `file-pattern` on a number of processes.
+will execute `command` with each of the files in `jobs-dir` matching `file-pattern` on a number of processes.
 
 Number of processes can be incremented and decremented using `+` and `-` keyboard keys.
 
