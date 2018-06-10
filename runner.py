@@ -22,8 +22,9 @@ class LogParseError(Exception):
 
 
 class Runner:
-    def __init__(self, cmd_path, pattern, log_path):
+    def __init__(self, cmd_path, jobs_dir, pattern, log_path):
         self._cmd = cmd_path
+        self._jobs_dir = jobs_dir
         self._pattern = pattern
         self._log = open(log_path, 'a')
 
@@ -106,7 +107,8 @@ class Runner:
     def _worker(self):
         while True:
             job = self._job_get()
-            returncode = subprocess.call([self._cmd, job], stdout=sys.stdout, stderr=sys.stdout)
+            argv = [self._cmd, os.path.join(self._jobs_dir, job)]
+            returncode = subprocess.call(argv, stdout=sys.stdout, stderr=sys.stdout)
             if returncode == 0:
                 self._job_done(job)
             else:
@@ -142,13 +144,13 @@ class Runner:
 
 
     def _update_jobs(self):
-        mtime = os.stat('.').st_mtime
+        mtime = os.stat(self._jobs_dir).st_mtime
         if self._mtime == mtime:
             return
         self._mtime = mtime
 
         files = []
-        for fname in os.listdir('.'):
+        for fname in os.listdir(self._jobs_dir):
             if not fname.startswith('.') and fnmatch.fnmatch(fname, self._pattern):
                 files.append(fname)
 
@@ -230,19 +232,27 @@ class Runner:
         self._waiting.notify(self._can_start())
 
 
+USAGE = 'usage: {} <command> <jobs-dir> [file-pattern]'
+
+
 def main():
-    if len(sys.argv) != 3:
-        print('usage: {} <command> <file-pattern>'.format(sys.argv[0]), file=sys.stderr)
+    if len(sys.argv) == 4:
+        cmd, jobs_dir, pattern = sys.argv[1:]
+    elif len(sys.argv) == 3:
+        cmd, jobs_dir = sys.argv[1:]
+        pattern = '*'
+    else:
+        print(USAGE.format(sys.argv[0]), file=sys.stderr)
         sys.exit(1)
-    cmd, pattern = sys.argv[1:]
 
     cmd_path = shutil.which(cmd)
     if not cmd_path:
         print('{}: {} command not found'.format(sys.argv[0], cmd), file=sys.stderr)
         sys.exit(1)
-    log_path = '.' + os.path.basename(cmd_path) + '.log'
 
-    runner = Runner(cmd_path, pattern, log_path)
+    log_path = os.path.join(jobs_dir, '.' + os.path.basename(cmd_path) + '.log')
+
+    runner = Runner(cmd_path, jobs_dir, pattern, log_path)
 
     try:
         runner.load_log()
