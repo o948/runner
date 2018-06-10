@@ -3,15 +3,23 @@ Tool to execute specified command on a set of files in parallel.
 
 ## Usage
 ```
-$ runner command jobs-dir [file-pattern]
+runner command jobs-dir [file-pattern]
 ```
-will execute `command` with each of the files in `jobs-dir` matching `file-pattern` on a number of processes.
-
-Number of processes can be incremented and decremented using `+` and `-` keyboard keys.
+is like
+```bash
+for job in jobs-dir/file-pattern; do
+  command "$job"
+done
+```
+but
+- multiple jobs are processed in parallel (use `+` and `-` keyboard keys to set number of processes)
+- failed jobs are retried
+- the set of jobs is periodically refreshed
+- `runner` can be safely restarted (state saved in `jobs-dir/.command.log`)
 
 When the `runner` is running it shows:
 - number of processes currently working and number of processes set
-- number of files left to process and total number of files processed
+- number of jobs left to process and total number of jobs processed already
 - estimated time to wait
 
 E.g.:
